@@ -3,6 +3,7 @@
     const handlebars = require('express-handlebars');
     const app = express();
     const admin = require('./routes/admin'); //chama um grupo de rotas
+    const usuarios = require('./routes/usuario');
     const path = require('path');
     const mongoose = require('mongoose');
     const session = require('express-session');
@@ -125,6 +126,7 @@
     })
 
     app.use('/admin', admin); //aqui ele usa um prefixo para o grupo de rotas, nesse caso e o /admin - routes/admin.js
+    app.use('/usuarios', usuarios);
 // Outros
     const PORT = 3000;
     app.listen(PORT, () => {
