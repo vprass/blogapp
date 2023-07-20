@@ -7,6 +7,9 @@
     const mongoose = require('mongoose');
     const session = require('express-session');
     const flash = require('connect-flash');
+    require('./models/Postagem');
+    const Postagem = mongoose.model('postagens');
+
 // Configurações
     // Sessão
         app.use(session({
@@ -42,6 +45,43 @@
         app.use(express.static(path.join(__dirname, "public")))
 // Rotas
     app.use('/admin', admin); //aqui ele usa um prefixo para o grupo de rotas, nesse caso e o /admin - routes/admin.js
+
+    app.get('/', (req, res) => {
+        Postagem
+        .find()
+        .lean()
+        .populate('categoria')
+        .sort({data: 'desc'})
+        .then((postagens) => {
+            res.render('index', {postagens: postagens})
+        })
+        .catch((err) => {
+            req.flash('error_msg', 'Houve um erro interno')
+            res.redirect('/404')
+        })
+    })
+
+    app.get('/404', (req, res) => {
+        res.send('<h1>Erro 404</h1>')
+    })
+
+    app.get('/postagem/:slug', (req, res) => {
+        Postagem
+        .findOne({slug: req.params.slug})
+        .lean()
+        .then((postagem) => {
+            if(postagem){
+                res.render('postagem/index', {postagem: postagem})
+            }else{
+                req.flash('error_msg', 'Esta postagem não existe')
+                res.redirect('/')
+            }
+        })
+        .catch((err) => {
+            req.flash('error_msg', 'Houve um erro interno')
+            res.redirect('/')
+        })
+    })
 // Outros
     const PORT = 3000;
     app.listen(PORT, () => {
