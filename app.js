@@ -9,6 +9,8 @@
     const flash = require('connect-flash');
     require('./models/Postagem');
     const Postagem = mongoose.model('postagens');
+    require('./models/Categoria');
+    const Categoria = mongoose.model('categorias');
 
 // Configurações
     // Sessão
@@ -44,8 +46,7 @@
     // Public
         app.use(express.static(path.join(__dirname, "public")))
 // Rotas
-    app.use('/admin', admin); //aqui ele usa um prefixo para o grupo de rotas, nesse caso e o /admin - routes/admin.js
-
+    
     app.get('/', (req, res) => {
         Postagem
         .find()
@@ -59,10 +60,6 @@
             req.flash('error_msg', 'Houve um erro interno')
             res.redirect('/404')
         })
-    })
-
-    app.get('/404', (req, res) => {
-        res.send('<h1>Erro 404</h1>')
     })
 
     app.get('/postagem/:slug', (req, res) => {
@@ -82,6 +79,52 @@
             res.redirect('/')
         })
     })
+    
+    app.get('/categorias', (req, res) => {
+        Categoria
+        .find()
+        .lean()
+        .then((categorias) => {
+            res.render('categorias/index', {categorias: categorias})
+        })
+        .catch((err) => {
+            req.flash('error_msg', 'Houve um erro ao listar as categorias')
+            res.redirect('/')
+        })
+    })
+
+    app.get('/categorias/:slug', (req, res) => {
+        Categoria
+        .findOne({slug: req.params.slug})
+        .lean()
+        .then((categoria) => {
+            if(categoria){
+                Postagem
+                .find({categoria: categoria._id})
+                .lean()
+                .then((postagens) => {
+                    res.render('categorias/postagens', {postagens: postagens, categoria: categoria})
+                })
+                .catch((err) => {
+                    req.flash('error_msg', 'Houve um erro ao listar os posts')
+                    res.redirect('/')
+                })
+            }else{
+                req.flash('error_msg', 'Esta categoria não existe')
+                res.redirect('/')
+            }
+        })
+        .catch((err) => {
+            req.flash('error_msg', 'Houve um erro ao carregar a página desta categoria')
+            res.redirect('/')
+        })
+    })
+
+    app.get('/404', (req, res) => {
+        res.send('<h1>Erro 404</h1>')
+    })
+
+    app.use('/admin', admin); //aqui ele usa um prefixo para o grupo de rotas, nesse caso e o /admin - routes/admin.js
 // Outros
     const PORT = 3000;
     app.listen(PORT, () => {
